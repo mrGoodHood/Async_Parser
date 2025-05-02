@@ -20,4 +20,32 @@ async def send_request(url, rand_proxy) -> str:
 async def parse_category(category_url, rand_proxy):
     html_response = await send_request(url=category_url, rand_proxy=rand_proxy)
     soup = BeautifulSoup(html_response, "lxml")
-    pagination_block = soup.find("")
+    pagination_block = soup.find("div", class_="tm-pagination__pages")
+    pagination_block.find_all("a", class_="tm-pagination__pages")[-1].text.strip()
+
+    print(f"category: {category_url} | pages: {pages_count}")
+
+    dict_articles = {}
+    for page in range(int(pages_count)):
+        page_response = await send_request(
+            url = f"{category_url}/page{page}",
+            rand_proxy=rand_proxy
+        )
+
+        page_soup = BeautifulSoup(page_response, "lxml")
+        articles = page_soup.find_all("article", class_="tm-articles-list__item")
+
+        for article in articles:
+            info_block = article.find("a", class_="tm-title__link")
+            title = info_block.find("span").text.strip()
+            id = int(info_block.get("href").split("/")[-2])
+            link = f"https://habr.com{info_block.get("href")}"
+            category_name = category_url.split("/"[-1])
+
+            result = f"{category_name} | {title} | {link}\n"
+
+            if id in dict_articles:
+                continue
+            else:
+                dict_articles[id] = result
+
