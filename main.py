@@ -21,7 +21,7 @@ async def parse_category(category_url, rand_proxy):
     html_response = await send_request(url=category_url, rand_proxy=rand_proxy)
     soup = BeautifulSoup(html_response, "lxml")
     pagination_block = soup.find("div", class_="tm-pagination__pages")
-    pagination_block.find_all("a", class_="tm-pagination__pages")[-1].text.strip()
+    pages_count = pagination_block.find_all("a", class_="tm-pagination__pages")[-1].text.strip()
 
     print(f"category: {category_url} | pages: {pages_count}")
 
@@ -49,3 +49,18 @@ async def parse_category(category_url, rand_proxy):
             else:
                 dict_articles[id] = result
 
+
+
+    with open("dict_articles.json", "w") as file:
+        json.dump(dict_articles, file)
+
+    print(dict_articles)
+
+
+async def main():
+    rand_proxy = random.choice(PROXY_LIST)
+    data = [parse_category(category, rand_proxy) for category in CATEGORIES]
+    await asyncio.gather(*data)
+
+if __name__ == "__main__":
+    asyncio.run(main())
